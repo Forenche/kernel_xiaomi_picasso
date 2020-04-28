@@ -3217,21 +3217,20 @@ void sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms,
 
 	if (enable) {
 		struct pm_qos_request *req;
-		u32 cpu_irq_latency;
 
-		req = &sde_kms->pm_qos_irq_req;
+		req = &sde_kms->pm_qos_Sirq_req;
 		req->type = PM_QOS_REQ_AFFINE_CORES;
-		req->cpus_affine = sde_kms->irq_cpu_mask;
-		cpu_irq_latency = sde_kms->catalog->perf.cpu_irq_latency;
+		atomic_set(&req->cpus_affine,
+				   *cpumask_bits(&sde_kms->irq_cpu_mask));
 
 		if (pm_qos_request_active(req))
-			pm_qos_update_request(req, cpu_irq_latency);
+			pm_qos_update_request(req, SDE_KMS_PM_QOS_CPU_DMA_LATENCY);
 		else if (atomic_read(&req->cpus_affine)) {
 			/** If request is not active yet and mask is not empty
 			 *  then it needs to be added initially
 			 */
 			pm_qos_add_request(req, PM_QOS_CPU_DMA_LATENCY,
-					cpu_irq_latency);
+					SDE_KMS_PM_QOS_CPU_DMA_LATENCY);
 		}
 	} else if (!enable && pm_qos_request_active(&sde_kms->pm_qos_irq_req)) {
 		pm_qos_update_request(&sde_kms->pm_qos_irq_req,
