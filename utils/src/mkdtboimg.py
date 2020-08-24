@@ -18,13 +18,13 @@ from __future__ import print_function
 """Tool for packing multiple DTB/DTBO files into a single image"""
 
 import argparse
-import os
 import fnmatch
+import os
+import struct
+import zlib
 from array import array
 from collections import namedtuple
-import struct
 from sys import stdout
-import zlib
 
 class CompressionFormat(object):
     """Enum representing DT compression format for a DT entry.
