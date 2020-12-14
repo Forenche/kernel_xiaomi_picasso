@@ -3226,7 +3226,7 @@ void sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms,
 
 		if (pm_qos_request_active(req))
 			pm_qos_update_request(req, cpu_irq_latency);
-		else if (!cpumask_empty(&req->cpus_affine)) {
+		else if (atomic_read(&req->cpus_affine)) {
 			/** If request is not active yet and mask is not empty
 			 *  then it needs to be added initially
 			 */
