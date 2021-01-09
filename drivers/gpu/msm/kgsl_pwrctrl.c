@@ -786,6 +786,7 @@ static ssize_t thermal_pwrlevel_store(struct device *dev,
 	int ret;
 	unsigned int level = 0;
 
+	return count;
 	ret = kgsl_sysfs_store(buf, &level);
 
 	if (ret)
