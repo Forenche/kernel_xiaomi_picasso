@@ -86,6 +86,7 @@ bool task_is_zygote(struct task_struct *task)
 {
 	return task == zygote32_task || task == zygote64_task;
 }
+#define HWCOMPOSER_BIN_PREFIX "/vendor/bin/hw/android.hardware.graphics.composer"
 
 void __register_binfmt(struct linux_binfmt * fmt, int insert)
 {
@@ -1848,6 +1849,15 @@ static int __do_execve_file(int fd, struct filename *filename,
 			zygote32_task = current;
 		else if (unlikely(!strcmp(filename->name, ZYGOTE64_BIN)))
 			zygote64_task = current;
+	}
+
+	if (is_global_init(current->parent)) {
+		if (unlikely(!strncmp(filename->name,
+				      HWCOMPOSER_BIN_PREFIX,
+				      strlen(HWCOMPOSER_BIN_PREFIX)))) {
+			current->flags |= PF_PERF_CRITICAL;
+			set_cpus_allowed_ptr(current, cpu_hp_mask);
+		}
 	}
 
 	/* execve succeeded */
