@@ -32,10 +32,14 @@
 #include <drm/drm_print.h>
 #include <drm/drm_writeback.h>
 #include <linux/sync_file.h>
+#include <linux/cpu_input_boost.h>
 #include <linux/devfreq_boost.h>
 
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
+
+static int frame_boost_timeout __read_mostly = CONFIG_DRM_FRAME_BOOST_TIMEOUT;
+module_param(frame_boost_timeout, int, 0644);
 
 void __drm_crtc_commit_free(struct kref *kref)
 {
@@ -2557,6 +2561,17 @@ static void complete_signaling(struct drm_device *dev,
 	kfree(fence_state);
 }
 
+static void drm_kick_frame_boost(int timeout_ms)
+{
+	if (!timeout_ms)
+		return;
+
+	if (timeout_ms < 0 || should_kick_frame_boost(timeout_ms)) {
+		devfreq_boost_kick(DEVFREQ_MSM_DDRBW);
+                devfreq_boost_kick(DEVFREQ_MSM_LLCCBW);
+	}
+}
+
 int drm_mode_atomic_ioctl(struct drm_device *dev,
 			  void *data, struct drm_file *file_priv)
 {
@@ -2601,8 +2616,7 @@ int drm_mode_atomic_ioctl(struct drm_device *dev,
 	drm_modeset_acquire_init(&ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE);
 
 	if (!(arg->flags & DRM_MODE_ATOMIC_TEST_ONLY)) {
-		devfreq_boost_kick(DEVFREQ_MSM_DDRBW);
-		devfreq_boost_kick(DEVFREQ_MSM_LLCCBW);
+		drm_kick_frame_boost(frame_boost_timeout);
 	}
 
 	state = drm_atomic_state_alloc(dev);

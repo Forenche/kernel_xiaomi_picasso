@@ -415,6 +415,15 @@ config DRM_SAVAGE
 
 endif # DRM_LEGACY
 
+config DRM_FRAME_BOOST_TIMEOUT
+	int "Post-input frame boost timeout"
+	depends on CPU_INPUT_BOOST
+	default "3250"
+	help
+	  The timeout in milliseconds during which we boost the CPU and DDR bus
+	  when a new frame is committed to a DRM display, counting from when the
+	  last input event was received.
+
 # Separate option because drm_panel_orientation_quirks.c is shared with fbdev
 config DRM_PANEL_ORIENTATION_QUIRKS
 	tristate
