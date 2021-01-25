@@ -278,6 +278,12 @@ config DEVFREQ_MSM_DDRBW_BOOST_FREQ
 	help
 	  Boost frequency for the MSM DDR bus.
 
+config DEVFREQ_MSM_LLCCBW_BOOST_FREQ
+	int "Boost freq for llcc-bw device"
+	default "0"
+	help
+	  Boost frequency for the MSM LLCC bus.
+
 endif
 
 source "drivers/devfreq/event/Kconfig"
