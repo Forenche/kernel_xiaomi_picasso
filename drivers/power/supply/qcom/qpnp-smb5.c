@@ -232,6 +232,7 @@ struct smb5 {
 #ifdef CONFIG_BQ2597X_CHARGE_PUMP
 static struct smb_charger *__smbchg;
 
+#endif
 static int __debug_mask = 0;
 
 static ssize_t pd_disabled_show(struct device *dev, struct device_attribute
