@@ -386,7 +386,8 @@ static inline int kgsl_get_page_size(size_t size, unsigned int align,
 		return PAGE_SIZE;
 }
 #else
-static inline int kgsl_get_page_size(size_t size, unsigned int align)
+static inline int kgsl_get_page_size(size_t size, unsigned int align,
+			struct kgsl_memdesc *memdesc)
 {
 	return PAGE_SIZE;
 }
