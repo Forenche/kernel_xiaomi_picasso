@@ -656,8 +656,7 @@ static int msm_restart_probe(struct platform_device *pdev)
 	if (!download_mode)
 		scm_disable_sdi();
 
-	force_warm_reboot = of_property_read_bool(dev->of_node,
-						"qcom,force-warm-reboot");
+	force_warm_reboot = true;
 
 	return 0;
 
