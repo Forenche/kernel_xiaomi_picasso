@@ -612,7 +612,7 @@ CONFIG_CRYPTO_AES_ARM64_NEON_BLK=y
 # CONFIG_CRYPTO_POLY1305_NEON is not set
 # CONFIG_CRYPTO_AES_ARM64_BS is not set
 # CONFIG_FACTORY_BUILD is not set
-CONFIG_HWCONF_MANAGER=y
+# CONFIG_HWCONF_MANAGER is not set
 
 #
 # General architecture-dependent options
