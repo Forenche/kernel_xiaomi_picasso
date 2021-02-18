@@ -46,11 +46,6 @@ static void set_boost_policy(int type)
 		return;
 	}
 
-	if (CONFIG_ARCH_KONA) {
-		boost_policy = SCHED_BOOST_ON_BIG;
-		return;
-	}
-
 	boost_policy = SCHED_BOOST_ON_ALL;
 }
 
