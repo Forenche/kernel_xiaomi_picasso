@@ -49,7 +49,7 @@ function finerr() {
 }
 # Compile plox
 function compile() {
-printf "/n/n/n/n/n/n" | make O=out ARCH=arm64 picasso_user_defconfig
+make O=out ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-gnu- picasso_user_defconfig
        make -j$(nproc --all) O=out \
                              ARCH=arm64 \
 			     CC=clang \

@@ -10,7 +10,6 @@ jobs:
            git config --global user.name "Forenche"
            git config --global user.email "prahul2003@gmail.com"
            git config --global color.ui false
-           git clone https://github.com/akhilnarang/scripts && cd scripts && bash setup/android_build_env.sh && cd ..
            mkdir kernul
            cd kernul
            wget https://raw.githubusercontent.com/Forenche/kernel_xiaomi_picasso/main/.circleci/build.sh
