@@ -3969,7 +3969,7 @@ static inline bool task_fits_capacity(struct task_struct *p,
 	else
 		margin = sched_capacity_margin_up[task_cpu(p)];
 
-	return capacity * 1024 > uclamp_task_util(p) * margin;
+	return capacity * 1024 > task_util_est(p) * margin;
 }
 
 static inline bool task_fits_max(struct task_struct *p, int cpu)
@@ -4027,8 +4027,12 @@ static inline void adjust_cpus_for_packing(struct task_struct *p,
 	if (*best_idle_cpu == -1 || *target_cpu == -1)
 		return;
 
+	#ifdef CONFIG_SCHED_WALT
 	if (prefer_spread_on_idle(*best_idle_cpu, false))
+	#else
+	if (prefer_spread_on_idle(*best_idle_cpu))
 		fbt_env->need_idle |= 2;
+	#endif
 
 	if (task_rtg_high_prio(p) && walt_nr_rtg_high_prio(*target_cpu) > 0) {
 		*target_cpu = -1;
@@ -6268,6 +6272,17 @@ schedtune_cpu_margin_with(unsigned long util, int cpu, struct task_struct *p)
 
 #endif /* CONFIG_SCHED_TUNE */
 
+static inline unsigned long
+boosted_task_util(struct task_struct *task)
+{
+	unsigned long util = task_util_est(task);
+	long margin = schedtune_task_margin(task);
+
+	trace_sched_boost_task(task, util, margin);
+
+	return util;
+}
+
 static unsigned long cpu_util_without(int cpu, struct task_struct *p);
 
 static unsigned long capacity_spare_without(int cpu, struct task_struct *p)
@@ -7058,7 +7073,7 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 					struct task_struct *p,
 					struct find_best_target_env *fbt_env)
 {
-	unsigned long min_util = uclamp_task(p);
+	unsigned long min_util = boosted_task_util(p);
 	unsigned long target_capacity = ULONG_MAX;
 	unsigned long min_wake_util = ULONG_MAX;
 	unsigned long target_max_spare_cap = 0;
@@ -10886,11 +10901,18 @@ static int load_balance(int this_cpu, struct rq *this_rq,
 		.loop		= 0,
 	};
 
+	#ifdef CONFIG_SCHED_WALT
 	env.prefer_spread = (idle != CPU_NOT_IDLE &&
 				prefer_spread_on_idle(this_cpu,
 				idle == CPU_NEWLY_IDLE) &&
 				!((sd->flags & SD_ASYM_CPUCAPACITY) &&
 				 !is_asym_cap_cpu(this_cpu)));
+	#else
+	env.prefer_spread = (idle != CPU_NOT_IDLE &&
+				prefer_spread_on_idle(this_cpu) &&
+				!((sd->flags & SD_ASYM_CPUCAPACITY) &&
+				 !is_asym_cap_cpu(this_cpu)));
+	#endif
 
 	cpumask_and(cpus, sched_domain_span(sd), cpu_active_mask);
 
@@ -11417,8 +11439,12 @@ static void rebalance_domains(struct rq *rq, enum cpu_idle_type idle)
 		}
 		max_cost += sd->max_newidle_lb_cost;
 
+		#ifdef CONFIG_SCHED_WALT
 		if (!sd_overutilized(sd) && !prefer_spread_on_idle(cpu,
 					idle == CPU_NEWLY_IDLE))
+		#else
+		if (!sd_overutilized(sd) && !prefer_spread_on_idle(cpu))
+		#endif
 			continue;
 
 		if (!(sd->flags & SD_LOAD_BALANCE))
@@ -11677,10 +11703,15 @@ static void nohz_balancer_kick(struct rq *rq)
 	 * happens from the tickpath.
 	 */
 	if (static_branch_likely(&sched_energy_present)) {
+		#ifdef CONFIG_SCHED_WALT
 		if (rq->nr_running >= 2 && (cpu_overutilized(cpu) ||
 			prefer_spread_on_idle(cpu, false)))
+		#else
+		if (rq->nr_running >= 2 && (cpu_overutilized(cpu) ||
+			prefer_spread_on_idle(cpu)))
+		#endif
 			flags = NOHZ_KICK_MASK;
-		goto out;
+			goto out;
 	}
 
 	if (rq->nr_running >= 2) {
@@ -12049,7 +12080,11 @@ static int idle_balance(struct rq *this_rq, struct rq_flags *rf)
 	int pulled_task = 0;
 	u64 curr_cost = 0;
 	u64 avg_idle = this_rq->avg_idle;
+	#ifdef CONFIG_SCHED_WALT
 	bool prefer_spread = prefer_spread_on_idle(this_cpu, true);
+	#else
+	bool prefer_spread = prefer_spread_on_idle(this_cpu);
+	#endif
 	bool force_lb = (!is_min_capacity_cpu(this_cpu) &&
 				silver_has_big_tasks() &&
 				sysctl_sched_force_lb_enable &&
