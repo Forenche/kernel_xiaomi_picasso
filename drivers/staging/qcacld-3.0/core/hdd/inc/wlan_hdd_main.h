@@ -1077,6 +1077,8 @@ struct hdd_context;
  * @latency_level: 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
  * @last_disconnect_reason: Last disconnected internal reason code
  *                          as per enum qca_disconnect_reason_codes
+ * @connect_req_status: Last disconnected internal status code
+ *                          as per enum qca_sta_connect_fail_reason_codes
  * @upgrade_udp_qos_threshold: The threshold for user priority upgrade for
 			       any UDP packet.
  * @handle_feature_update: Handle feature update only if it is triggered
@@ -1367,6 +1369,7 @@ struct hdd_adapter {
 	uint32_t motion_det_baseline_value;
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 	enum qca_disconnect_reason_codes last_disconnect_reason;
+	enum wlan_status_code connect_req_status;
 
 #ifdef WLAN_FEATURE_PERIODIC_STA_STATS
 	/* Indicate whether to display sta periodic stats */
@@ -1643,7 +1646,14 @@ struct hdd_fw_ver_info {
 	uint32_t crmid;
 };
 
+/**
+ * The logic for get current index of history is dependent on this
+ * value being power of 2.
+ */
 #define WLAN_HDD_ADAPTER_OPS_HISTORY_MAX 4
+QDF_COMPILE_TIME_ASSERT(adapter_ops_history_size,
+			(WLAN_HDD_ADAPTER_OPS_HISTORY_MAX &
+			 (WLAN_HDD_ADAPTER_OPS_HISTORY_MAX - 1)) == 0);
 
 /**
  * enum hdd_adapter_ops_event - events for adapter ops history
@@ -1692,6 +1702,7 @@ struct hdd_adapter_ops_history {
  * @rx_aggregation: rx aggregation enable or disable state
  * @gro_force_flush: gro force flushed indication flag
  * @adapter_ops_wq: High priority workqueue for handling adapter operations
+ * @is_dual_mac_cfg_updated: indicate whether dual mac cfg has been updated
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2026,6 +2037,7 @@ struct hdd_context {
 
 	qdf_workqueue_t *adapter_ops_wq;
 	struct hdd_adapter_ops_history adapter_ops_history;
+	bool is_dual_mac_cfg_updated;
 };
 
 /**
@@ -2791,6 +2803,23 @@ hdd_get_current_throughput_level(struct hdd_context *hdd_ctx)
 {
 	return hdd_ctx->cur_vote_level;
 }
+
+#ifdef DP_MEM_PRE_ALLOC
+static inline
+void *hdd_get_prealloc_dma_mem_unaligned(size_t size,
+					 qdf_dma_addr_t *paddr,
+					 uint32_t ring_type)
+{
+	return dp_prealloc_get_consistent_mem_unaligned(size, paddr,
+							ring_type);
+}
+
+static inline
+void hdd_put_prealloc_dma_mem_unaligned(void *vaddr)
+{
+	dp_prealloc_put_consistent_mem_unaligned(vaddr);
+}
+#endif
 
 /**
  * hdd_set_current_throughput_level() - update the current vote

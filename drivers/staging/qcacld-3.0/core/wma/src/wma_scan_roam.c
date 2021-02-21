@@ -509,19 +509,28 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	params.traffic_threshold =
 			roam_params->traffic_threshold;
 	params.initial_dense_status = roam_params->initial_dense_status;
-	if (db2dbm_enabled)
+	if (db2dbm_enabled) {
 		params.bg_scan_bad_rssi_thresh =
 					   roam_params->bg_scan_bad_rssi_thresh;
-	else
+		params.roam_data_rssi_threshold =
+					roam_params->roam_data_rssi_threshold;
+	} else {
 		params.bg_scan_bad_rssi_thresh =
-					  roam_params->bg_scan_bad_rssi_thresh -
-					  WMA_NOISE_FLOOR_DBM_DEFAULT;
+				roam_params->bg_scan_bad_rssi_thresh -
+				WMA_NOISE_FLOOR_DBM_DEFAULT;
+		params.roam_data_rssi_threshold =
+					roam_params->roam_data_rssi_threshold -
+					WMA_NOISE_FLOOR_DBM_DEFAULT;
+	}
 
 	params.bg_scan_client_bitmap = roam_params->bg_scan_client_bitmap;
 	params.roam_bad_rssi_thresh_offset_2g =
 				roam_params->roam_bad_rssi_thresh_offset_2g;
 	if (params.roam_bad_rssi_thresh_offset_2g)
 		params.flags |= WMI_ROAM_BG_SCAN_FLAGS_2G_TO_5G_ONLY;
+	params.roam_data_rssi_threshold_triggers =
+		roam_params->roam_data_rssi_threshold_triggers;
+	params.rx_data_inactivity_time = roam_params->rx_data_inactivity_time;
 
 	/*
 	 * The current Noise floor in firmware is -96dBm. Penalty/Boost
@@ -629,6 +638,7 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 		  roam_params->bg_scan_bad_rssi_thresh,
 		  roam_params->bg_scan_client_bitmap,
 		  roam_params->roam_bad_rssi_thresh_offset_2g);
+
 	return status;
 }
 
@@ -2583,14 +2593,14 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		kck_len = KCK_192BIT_KEY_LEN;
 		kek_len = KEK_256BIT_KEY_LEN;
 
-		roam_synch_ind_ptr->kek_len = kek_len;
-		qdf_mem_copy(roam_synch_ind_ptr->kek,
-			     key_ft->key_buffer, kek_len);
-
 		roam_synch_ind_ptr->kck_len = kck_len;
 		qdf_mem_copy(roam_synch_ind_ptr->kck,
-			     (key_ft->key_buffer + kek_len),
-			     kck_len);
+			     key_ft->key_buffer, kck_len);
+
+		roam_synch_ind_ptr->kek_len = kek_len;
+		qdf_mem_copy(roam_synch_ind_ptr->kek,
+			     (key_ft->key_buffer + kck_len),
+			     kek_len);
 
 		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     (key_ft->key_buffer + kek_len + kck_len),
@@ -3829,8 +3839,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 					wma->wmi_handle, event,
 					&roam_info->data_11kv, 0, 0);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("%s: Roam 11kv stats extract failed vdev %d",
-				 __func__, vdev_id);
+			wma_debug_rl("%s: Roam 11kv stats extract failed vdev %d",
+				     __func__, vdev_id);
 			qdf_mem_free(roam_info);
 			goto err;
 		}
@@ -3855,8 +3865,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 						wma->wmi_handle, event,
 						&roam_info->trigger, i);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("%s: Extract roam trigger stats failed vdev%d",
-				 __func__, vdev_id);
+			wma_debug_rl("%s: Extract roam trigger stats failed vdev %d at %d iteration",
+				     __func__, vdev_id, i);
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
@@ -3867,8 +3877,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 							&roam_info->scan, i,
 							num_chan, num_ap);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("%s: Roam scan stats extract failed vdev %d",
-				 __func__, vdev_id);
+			wma_debug_rl("%s: Roam scan stats extract failed vdev %d at %d iteration",
+				     __func__, vdev_id, i);
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
@@ -3880,8 +3890,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 							wma->wmi_handle, event,
 							&roam_info->result, i);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("%s: Roam result stats extract failed vdev %d",
-				 __func__, vdev_id);
+			wma_debug_rl("%s: Roam result stats extract failed vdev %d at %d iteration",
+				     __func__, vdev_id, i);
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
@@ -3891,8 +3901,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 				wma->wmi_handle, event,
 				&roam_info->data_11kv, i, num_rpt);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("%s: Roam 11kv stats extract failed vdev %d",
-				 __func__, vdev_id);
+			wma_debug_rl("%s: Roam 11kv stats extract failed vdev %d at %d iteration",
+				     __func__, vdev_id, i);
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
