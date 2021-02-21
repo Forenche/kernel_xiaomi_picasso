@@ -5008,6 +5008,7 @@ typedef struct {
     A_UINT32 tx_su_txbf_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
     A_UINT32 tx_su_ibf_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
     A_UINT32 tx_su_ol_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    A_UINT32 tx_legacy_ofdm_rate[HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS];
 } htt_tx_pdev_txbf_rate_stats_tlv;
 
 /* NOTE:
@@ -5307,6 +5308,7 @@ typedef struct {
 #define HTT_MAX_RX_OTA_ERR_CNT 14
 
 typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
     /* number of RXTD OFDMA OTA error counts except power surge and drop */
     A_UINT32 rx_ofdma_timing_err_cnt;
     /* rx_cck_fail_cnt:
@@ -5373,6 +5375,8 @@ typedef struct {
      * higher values indicating more noise interference.
      */
     A_INT32 ani_level;
+    /* running time in minutes since FW boot */
+    A_UINT32 fw_run_time;
 } htt_phy_stats_tlv;
 
 /* NOTE:
