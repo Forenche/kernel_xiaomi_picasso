@@ -4,7 +4,8 @@ git clone --depth=1 https://github.com/Forenche/kernel_xiaomi_picasso -b  main  
 cd kernel
 git clone --depth=1 https://github.com/kdrag0n/proton-clang clang
 git clone --depth=1 https://github.com/Forenche/AnyKernel3 -b picasso AnyKernel
-git clone --depth=1 https://android.googlesource.com/platform/system/libufdt libufdt
+# We now have libufdt already merged and updated in kernel tree
+#git clone --depth=1 https://android.googlesource.com/platform/system/libufdt libufdt
 echo "Done"
 IMAGE=$(pwd)/out/arch/arm64/boot/Image
 TANGGAL=$(date +"%F-%S")
@@ -26,7 +27,7 @@ function sendinfo() {
         -d chat_id="$chat_id" \
         -d "disable_web_page_preview=true" \
         -d "parse_mode=html" \
-        -d text="<b>• picasso-Stormbreaker Kernel •</b>%0ABuild started on <code>Circle CI</code>%0AFor device <b>Poco x3</b> (picasso)%0Abranch <code>$(git rev-parse --abbrev-ref HEAD)</code>(master)%0AUnder commit <code>$(git log --pretty=format:'"%h : %s"' -1)</code>%0AUsing compiler: <code>Proton clang 12</code>%0AStarted on <code>$(date)</code>%0A<b>Build Status:</b> #AOSP-Alpha"
+        -d text="<b>• Picasso-Meow Kernel •</b>%0ABuild started on <code>Circle CI</code>%0AFor device <b>Poco x3</b> (picasso)%0Abranch <code>$(git rev-parse --abbrev-ref HEAD)</code>(master)%0AUnder commit <code>$(git log --pretty=format:'"%h : %s"' -1)</code>%0AUsing compiler: <code>Proton clang 12</code>%0AStarted on <code>$(date)</code>%0A<b>Build Status:</b> #AOSP-Alpha"
 }
 # Push kernel to channel
 function push() {
@@ -56,15 +57,15 @@ make O=out ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-gnu- picasso_user_def
 			     CROSS_COMPILE=aarch64-linux-gnu- \
 			     CROSS_COMPILE_ARM32=arm-linux-gnueabi-
    cp out/arch/arm64/boot/Image AnyKernel
-   python2 "libufdt/utils/src/mkdtboimg.py" \
+   python2 "scripts/ufdt/libufdt/utils/src/mkdtboimg.py" \
 					create "out/arch/arm64/boot/dtbo.img" --page_size=4096 out/arch/arm64/boot/dts/qcom/*.dtbo
    cp out/arch/arm64/boot/dtbo.img AnyKernel
 }
 # Zipping
 function zipping() {
     cd AnyKernel || exit 1
-    zip -r9 picasso-Stormbreaker-${TANGGAL}.zip *
-    cd .. 
+    zip -r9 Picasso-Meow-${TANGGAL}.zip *
+    cd ..
 }
 sticker
 sendinfo
